@@ -1,0 +1,27 @@
+{
+  "name": "payment_processing",
+  "version": "1.0.0",
+  "description": "s'occupe de process les paiements d'une application",
+  "homepage": "https://github.com/thebenoit/payment_processing#readme",
+  "bugs": {
+    "url": "https://github.com/thebenoit/payment_processing/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thebenoit/payment_processing.git"
+  },
+  "license": "ISC",
+  "author": "kemmywillbenoit",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.12.2",
+    "stripe": "^17.7.0"
+  }
+}
