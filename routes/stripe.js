@@ -1,8 +1,8 @@
 import express from "express";
 import Stripe from "stripe";
 import dotenv from "dotenv";
-import User from "../../../mongo/schemas/user.js";
-import Notification from "../../../mongo/schemas/notification.js";
+import User from "../schemas/user.js";
+import mongoose from "../config/client.js";
 
 dotenv.config();
 const router = express.Router();
@@ -43,7 +43,10 @@ router.post(
           const priceId = session?.line_items?.data[0]?.price.id;
 
           let user;
+
           if (customer.email) {
+            console.log("🔴 Customer trouvé:", customer.email);
+            //update l'utilisateur
             user = await User.findOneAndUpdate(
               { email: customer.email },
               {
@@ -53,14 +56,8 @@ router.post(
               },
               { new: true }
             );
-
+            //si user n'existe pas peut pas payer
             if (!user) {
-              // user = await User.create({
-              //   email: customer.email,
-              //   name: customer.name,
-              //   customerId,
-              // });
-
               console.error(
                 `Tentative de paiement d'un utilisateur non inscrit: ${customer.email}`
               );
@@ -68,15 +65,13 @@ router.post(
                 `Utilisateur non Inscrit. Inscription requise avant le paiement`
               );
             }
-             //notification existe?
-            let notification = await Notification.findOne({userId: user._id});
-            //si notification existe, on la met à jour
-            if(notification){
-              notification.status = 'recurring';
-              await notification.save();
-            }
-
-
+            //notification existe?
+            // let notification = await Notification.findOne({userId: user._id});
+            // //si notification existe, on la met à jour
+            // if(notification){
+            //   notification.status = 'recurring';
+            //   await notification.save();
+            // }
 
             // Si on arrive ici, on est sûr que l'utilisateur existe et a été mis à jour
             console.log(`Utilisateur ${customer.email} mis à jour avec succès`);
@@ -100,7 +95,7 @@ router.post(
           }
 
           console.log("🔴 Subscription supprimée:", subscription.customer);
-          
+
           const user = await User.findOne({
             customerId: subscription.customer,
           });
@@ -117,10 +112,10 @@ router.post(
             });
           }
 
-          const notification = await Notification.updateOne(
-            { userId: user._id },
-            { $set: { status: "disabled" } }
-          );
+          //   const notification = await Notification.updateOne(
+          //     { userId: user._id },
+          //     { $set: { status: "disabled" } }
+          //   );
 
           // if (notification) {
           //   notification.status = "disabled";
@@ -131,80 +126,10 @@ router.post(
           await user.save();
 
           break;
-
-
         }
-        // case "invoice.paid":{
-        //   const invoice = await stripe.invoices.retrieve(
-        //     event.data.object.id,
-        //     {
-              
-        //     }
-        //   )
-        //   break;
-        // }
-      //   case "invoice.payment_failed":{
-      //   try{
 
-        
-      //   const invoice = await stripe.invoices.retrieve(
-      //     event.data.object.id,
-      //     {
-      //       expand: ['customer']
-      //     }
-      //   );
-      //   console.log("🔴 Invoice payment failed:", invoice.customer);
-
-      //   if(!invoice.customer){
-      //     console.log('⚠️ Pas de customer dans l\'invoice');
-      //     return res.json({
-      //       received: true,
-      //       warning: 'No customer in invoice'
-      //     })
-      //   }
-      //   //Trouver l'utilisateur associé au customer
-      //   const user = await User.findOneAndUpdate(
-      //     {customerId: invoice.customer},
-      //     {
-      //       hasAccess: false
-      //     },
-      //     {new: true}
-      //   )
-      //   if(!user){
-      //     console.log('⚠️ Utilisateur non trouvé pour customerId:');
-      //     return res.json({
-      //       received: true,
-      //       warning: 'User not found'
-      //     });
-      //   }
-
-      //   const notification = await Notification.updateOne(
-      //     {userId: user._id},
-      //     {$set: {status: 'disabled'}}
-      //   );
-
-      //   console.log(`🔴 Accès révoqué pour: ${user.email}`);
-
-      //   return res.json({
-      //     received: true,
-      //     status: 'access_revoked',
-      //     email: user.email
-      //   });
-      // } catch (error) {
-      //   console.error('Erreur lors de la gestion de l\'évènement invoice.payment_failed:', error);
-      //   return res.status(500).json({
-      //     received: true,
-      //     error: error.message
-      //   });
-      // }
-
-
-      //   break;
-      // }
         default:
           console.log(`évènement non géré ${event.type}`);
-
-
       }
       //Réponse de succès
       res.json({ received: true });
